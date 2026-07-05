@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Egyptian Net Salary Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f5f0; --surface:#ebebе6; --card:#e8e8e3; --border:#d4d4cc;
+    --gold:#2e7d52; --gold-light:#3a9e68; --gold-dim:rgba(46,125,82,0.12);
+    --red:#c0392b; --green:#2e7d52; --blue:#2d6bc4; --blue-dim:rgba(45,107,196,0.10);
+    --purple:#7c5cbf; --purple-dim:rgba(124,92,191,0.10);
+    --text:#111111; --muted:#555550; --accent:#2d6bc4;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:#f5f5f0; color:#111111;
+    font-family:'IBM Plex Sans',sans-serif;
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; padding:40px 16px 60px;
+  }
+  body::before {
+    content:''; position:fixed; top:-200px; left:50%;
+    transform:translateX(-50%); width:700px; height:400px;
+    background:radial-gradient(ellipse at center,rgba(46,125,82,0.05) 0%,transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+  header { text-align:center; margin-bottom:36px; position:relative; z-index:1; }
+  .badge {
+    display:inline-block; font-family:'IBM Plex Mono',monospace;
+    font-size:10px; letter-spacing:3px; color:var(--gold); text-transform:uppercase;
+    border:1px solid rgba(46,125,82,0.40); padding:4px 14px;
+    border-radius:2px; margin-bottom:16px;
+  }
+  h1 { font-family:'Playfair Display',serif; font-size:clamp(24px,5vw,40px); font-weight:700; color:#111111; line-height:1.15; }
+  h1 span { color:#111111; }
+  .author { margin-top:6px; font-size:12px; font-weight:300; color:var(--muted); letter-spacing:0.3px; }
+  .subtitle { margin-top:4px; font-size:13px; color:var(--muted); letter-spacing:0.5px; }
+  .container { width:100%; max-width:660px; position:relative; z-index:1; }
+
+  /* ── 3-tab switcher ── */
+  .mode-switcher {
+    display:flex; gap:4px; background:#deded8;
+    border:1px solid #c8c8c0; border-radius:10px; padding:4px; margin-bottom:20px;
+  }
+  .mode-btn {
+    flex:1; padding:11px 6px; border-radius:7px; border:none;
+    background:transparent; color:#888882; font-family:'IBM Plex Mono',monospace;
+    font-size:10px; letter-spacing:0.8px; cursor:pointer; transition:all 0.22s;
+    text-transform:uppercase; line-height:1.5; text-align:center; font-weight:700;
+  }
+  .mode-btn .mode-arrow { display:block; font-size:15px; margin-bottom:2px; letter-spacing:0; }
+  .mode-btn.gold-active   { background:#ffffff; border:1px solid #c8c8c0; color:var(--gold); box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+  .mode-btn.blue-active   { background:#ffffff; border:1px solid #c8c8c0; color:var(--blue); box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+  .mode-btn.purple-active { background:#ffffff; border:1px solid #c8c8c0; color:var(--purple); box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+  .mode-btn.orange-active { background:#ffffff; border:1px solid #c8c8c0; color:#e67e22; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+
+  /* ── Input card ── */
+  .input-card {
+    background:#e8e8e3; border:1px solid #d0d0c8;
+    border-radius:12px; padding:28px 28px 24px; margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  }
+  .input-label {
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:2px;
+    color:var(--gold); text-transform:uppercase; margin-bottom:12px; display:block;
+  }
+  .input-label.blue   { color:var(--blue); }
+  .input-label.purple { color:var(--purple); }
+
+  .input-wrapper {
+    display:flex; align-items:center; background:#f0f0eb;
+    border:1px solid #c8c8c0; border-radius:8px; overflow:hidden;
+    transition:border-color 0.2s,box-shadow 0.2s;
+  }
+  .input-wrapper.gf:focus-within { border-color:var(--gold);   box-shadow:0 0 0 3px rgba(46,125,82,0.12); }
+  .input-wrapper.bf:focus-within { border-color:var(--blue);   box-shadow:0 0 0 3px rgba(45,107,196,0.12); }
+  .input-wrapper.pf:focus-within { border-color:var(--purple); box-shadow:0 0 0 3px rgba(124,92,191,0.12); }
+
+  .cur {
+    padding:0 18px; font-family:'IBM Plex Mono',monospace; font-size:14px;
+    color:var(--gold); border-right:1px solid #c8c8c0; height:56px;
+    display:flex; align-items:center; white-space:nowrap;
+  }
+  .cur.blue   { color:var(--blue); }
+  .cur.purple { color:var(--purple); }
+
+  input[type="number"] {
+    flex:1; background:transparent; border:none; outline:none;
+    color:#111111; font-family:'IBM Plex Mono',monospace;
+    font-size:22px; padding:0 20px; height:56px; width:100%;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; }
+
+  .toggle-row { display:flex; gap:10px; margin-top:18px; }
+  .toggle-btn {
+    flex:1; padding:10px; border-radius:6px; border:1px solid #c8c8c0;
+    background:#f0f0eb; color:#888882; font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase;
+  }
+  .toggle-btn.active { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); }
+
+  .calc-btn {
+    width:100%; margin-top:22px; padding:16px; background:var(--gold);
+    color:#ffffff; border:none; border-radius:8px; font-family:'IBM Plex Mono',monospace;
+    font-size:13px; letter-spacing:2px; text-transform:uppercase;
+    cursor:pointer; font-weight:500; transition:all 0.2s;
+  }
+  .calc-btn.blue-btn   { background:var(--blue);   color:#fff; }
+  .calc-btn.purple-btn { background:var(--purple);  color:#fff; }
+  .calc-btn:hover { filter:brightness(1.1); transform:translateY(-1px); }
+  .calc-btn:active { transform:translateY(0); }
+
+  /* ── Results ── */
+  .results { display:none; flex-direction:column; gap:12px; animation:fadeUp 0.4s ease; }
+  .results.visible { display:flex; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  .section-title {
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:3px;
+    color:#888882; text-transform:uppercase; margin-bottom:4px; padding-left:2px;
+  }
+  .breakdown-card { background:#e8e8e3; border:1px solid #d0d0c8; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  .breakdown-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 20px; border-bottom:1px solid #d8d8d0; transition:background 0.15s;
+  }
+  .breakdown-row:last-child { border-bottom:none; }
+  .breakdown-row:hover { background:rgba(0,0,0,0.02); }
+  .row-label { font-size:13px; color:#444440; }
+  .row-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:#888882; margin-top:2px; }
+  .row-amount { font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:500; }
+  .row-amount.ded  { color:var(--red); }
+  .row-amount.neut { color:#111111; }
+  .row-amount.pos  { color:var(--green); }
+  .row-amount.purp { color:var(--purple); }
+
+  .top-row {
+    background:rgba(0,0,0,0.03); padding:16px 20px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid #d8d8d0;
+  }
+  .top-label { font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px; color:#111111; text-transform:uppercase; }
+  .top-value { font-family:'IBM Plex Mono',monospace; font-size:16px; color:#111111; }
+
+  /* Hero cards */
+  .net-card {
+    background:linear-gradient(135deg,#e8f5ee 0%,#dff0e8 100%);
+    border:1px solid rgba(46,125,82,0.25); border-radius:12px;
+    padding:28px 24px; text-align:center; position:relative; overflow:hidden;
+    box-shadow:0 2px 8px rgba(46,125,82,0.08);
+  }
+  .net-card::before {
+    content:''; position:absolute; top:-60px; left:50%; transform:translateX(-50%);
+    width:300px; height:150px;
+    background:radial-gradient(ellipse,rgba(46,125,82,0.08) 0%,transparent 70%);
+  }
+  .gross-card {
+    background:linear-gradient(135deg,#e8eef8 0%,#dfe8f5 100%);
+    border:1px solid rgba(45,107,196,0.25); border-radius:12px;
+    padding:28px 24px; text-align:center; position:relative; overflow:hidden;
+    box-shadow:0 2px 8px rgba(45,107,196,0.08);
+  }
+  .gross-card::before {
+    content:''; position:absolute; top:-60px; left:50%; transform:translateX(-50%);
+    width:300px; height:150px;
+    background:radial-gradient(ellipse,rgba(45,107,196,0.08) 0%,transparent 70%);
+  }
+  .emergency-card {
+    background:linear-gradient(135deg,#f0ecfa 0%,#e8e2f5 100%);
+    border:1px solid rgba(124,92,191,0.25); border-radius:12px;
+    padding:28px 24px; text-align:center; position:relative; overflow:hidden;
+    box-shadow:0 2px 8px rgba(124,92,191,0.08);
+  }
+  .emergency-card::before {
+    content:''; position:absolute; top:-60px; left:50%; transform:translateX(-50%);
+    width:300px; height:150px;
+    background:radial-gradient(ellipse,rgba(124,92,191,0.08) 0%,transparent 70%);
+  }
+
+  .hero-label { font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; opacity:0.75; margin-bottom:10px; }
+  .hero-label.green  { color:var(--green);  }
+  .hero-label.blue   { color:var(--blue);   }
+  .hero-label.purple { color:var(--purple); }
+  .hero-amount { font-family:'Playfair Display',serif; font-size:clamp(30px,8vw,50px); font-weight:700; letter-spacing:-1px; }
+  .hero-amount.green  { color:var(--green);  }
+  .hero-amount.blue   { color:var(--blue);   }
+  .hero-amount.purple { color:var(--purple); }
+  .hero-cur { font-family:'IBM Plex Mono',monospace; font-size:16px; opacity:0.6; margin-right:4px; }
+  .hero-sub { margin-top:8px; font-size:12px; opacity:0.55; color:#111111; }
+
+  /* Bar */
+  .summary-bar { display:flex; gap:1px; height:6px; border-radius:4px; overflow:hidden; margin:20px 0 8px; }
+  .bar-net    { background:var(--green); }
+  .bar-si     { background:#b07d2a; }
+  .bar-tax    { background:var(--red); }
+  .bar-martyr { background:#7a7aaa; }
+  .bar-legend { display:flex; gap:16px; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; font-size:10px; color:#888882; }
+  .legend-item { display:flex; align-items:center; gap:6px; }
+  .legend-dot  { width:8px; height:8px; border-radius:2px; }
+
+  /* Bracket info */
+  .bracket-info {
+    background:#e8e8e3; border:1px solid #d0d0c8; border-left:3px solid var(--accent);
+    border-radius:8px; padding:14px 18px; font-size:12px; color:#555550; line-height:1.8;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .bracket-info strong { color:#111111; }
+  .bracket-badge {
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px;
+    letter-spacing:1px; padding:2px 8px; border-radius:4px; margin-bottom:6px;
+    background:rgba(45,107,196,0.10); color:var(--blue); border:1px solid rgba(45,107,196,0.25);
+  }
+
+  /* Emergency steps */
+  .steps-card {
+    background:#e8e8e3; border:1px solid #d0d0c8;
+    border-left:3px solid var(--purple); border-radius:8px;
+    padding:16px 18px; font-size:12px; color:#555550; line-height:1.9;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .steps-card strong { color:#111111; }
+  .step-num {
+    display:inline-block; width:20px; height:20px; background:var(--purple-dim);
+    color:var(--purple); border-radius:50%; text-align:center; line-height:20px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; margin-right:6px;
+  }
+
+  .disclaimer { margin-top:20px; font-size:11px; color:#888882; text-align:center; line-height:1.6; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="badge">Egypt · Law 7/2024 Tax · 2026 SI Rates</div>
+  <h1>Salary <span>Calculator</span></h1>
+  <p class="author">By Mohamed Abdo</p>
+  <p class="subtitle">Social Insurance · Income Tax · Martyr Fund · Emergency Fund</p>
+</header>
+
+<div class="container">
+
+  <!-- ── 3-tab switcher ── -->
+  <div class="mode-switcher">
+    <button class="mode-btn gold-active" id="modeGross" onclick="switchMode('gross')">
+      <span class="mode-arrow">↓</span>Gross → Net
+    </button>
+    <button class="mode-btn" id="modeNet" onclick="switchMode('net')">
+      <span class="mode-arrow">↑</span>Net → Gross
+    </button>
+    <button class="mode-btn" id="modeEmergency" onclick="switchMode('emergency')">
+      <span class="mode-arrow">🛡</span>Emergency Fund
+    </button>
+    <button class="mode-btn" id="modeBulk" onclick="switchMode('bulk')">
+      <span class="mode-arrow">📊</span>Bulk Import
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════
+       TAB 1 · GROSS → NET
+  ════════════════════════════════════ -->
+  <div id="panelGross">
+    <div class="input-card">
+      <label class="input-label">Gross Monthly Salary</label>
+      <div class="input-wrapper gf">
+        <div class="cur">EGP</div>
+        <input type="number" id="grossInput" placeholder="0" min="0" step="100"/>
+      </div>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="btnEmployee" onclick="setEmpMode('employee')">Employee View</button>
+        <button class="toggle-btn" id="btnEmployer" onclick="setEmpMode('employer')">+ Employer Cost</button>
+      </div>
+      <button class="calc-btn" onclick="calculateGrossToNet()">▶ Calculate Net Salary</button>
+    </div>
+
+    <div class="results" id="resultsGross">
+      <div class="section-title">Deductions Breakdown</div>
+      <div class="breakdown-card">
+        <div class="top-row">
+          <span class="top-label">Gross Salary</span>
+          <span class="top-value" id="rGross">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Employee Social Insurance</div><div class="row-sub" id="rSINote">11% of insurable wages</div></div>
+          <span class="row-amount ded" id="rSI">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Income Tax</div><div class="row-sub" id="rTaxNote">Law 7/2024 conditional brackets</div></div>
+          <span class="row-amount ded" id="rTax">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Martyr &amp; Injured Fund</div><div class="row-sub">0.05% of gross salary</div></div>
+          <span class="row-amount ded" id="rMartyr">—</span>
+        </div>
+      </div>
+
+      <div id="employerSection" style="display:none;">
+        <div class="section-title">Employer Contributions</div>
+        <div class="breakdown-card">
+          <div class="breakdown-row">
+            <div><div class="row-label">Employer Social Insurance</div><div class="row-sub">18.75% of insurable wages</div></div>
+            <span class="row-amount neut" id="rEmployerSI">—</span>
+          </div>
+          <div class="breakdown-row">
+            <div><div class="row-label">Total Employer Cost</div><div class="row-sub">Gross + Employer SI</div></div>
+            <span class="row-amount neut" id="rTotalCost">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="breakdown-card" style="padding:20px;">
+        <div class="summary-bar">
+          <div class="bar-net"    id="barNet"    style="flex:1"></div>
+          <div class="bar-si"     id="barSI"     style="flex:0.1"></div>
+          <div class="bar-tax"    id="barTax"    style="flex:0.05"></div>
+          <div class="bar-martyr" id="barMartyr" style="flex:0.005"></div>
+        </div>
+        <div class="bar-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#4caf7d"></div>Net Pay</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e8a84c"></div>Social Ins.</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e05a4e"></div>Income Tax</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#7a7aaa"></div>Martyr Fund</div>
+        </div>
+      </div>
+
+      <div class="bracket-info" id="rBracketInfo"></div>
+
+      <div class="net-card">
+        <div class="hero-label green">Take-Home Net Salary</div>
+        <div class="hero-amount green">
+          <span class="hero-cur" style="color:var(--green)">EGP</span><span id="rNet">—</span>
+        </div>
+        <div class="hero-sub" style="color:var(--green)" id="rNetPct">—</div>
+      </div>
+
+      <p class="disclaimer">
+        SI: Law 148/2019 · 2026 rates (min 2,700 / max 16,700 EGP) · Income Tax: Law 7/2024 (Art. 7 bis A)<br>
+        Martyr Fund: 0.05% of gross. Estimate only — verify with HR or accountant.
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       TAB 2 · NET → GROSS
+  ════════════════════════════════════ -->
+  <div id="panelNet" style="display:none;">
+    <div class="input-card">
+      <label class="input-label blue">Desired Net Monthly Salary</label>
+      <div class="input-wrapper bf">
+        <div class="cur blue">EGP</div>
+        <input type="number" id="netInput" placeholder="0" min="0" step="100"/>
+      </div>
+      <button class="calc-btn blue-btn" style="margin-top:22px;" onclick="calculateNetToGross()">▶ Calculate Required Gross</button>
+    </div>
+
+    <div class="results" id="resultsNet">
+      <div class="section-title">Gross-Up Breakdown</div>
+      <div class="breakdown-card">
+        <div class="top-row" style="background:rgba(45,107,196,0.06);">
+          <span class="top-label">Required Gross</span>
+          <span class="top-value" id="rnGross" style="color:var(--blue)">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Employee Social Insurance</div><div class="row-sub" id="rnSINote">11% of insurable wages</div></div>
+          <span class="row-amount ded" id="rnSI">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Income Tax</div><div class="row-sub" id="rnTaxNote">Law 7/2024 conditional brackets</div></div>
+          <span class="row-amount ded" id="rnTax">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Martyr &amp; Injured Fund</div><div class="row-sub">0.05% of gross salary</div></div>
+          <span class="row-amount ded" id="rnMartyr">—</span>
+        </div>
+      </div>
+
+      <div class="section-title">Employer Contributions</div>
+      <div class="breakdown-card">
+        <div class="breakdown-row">
+          <div><div class="row-label">Employer Social Insurance</div><div class="row-sub">18.75% of insurable wages</div></div>
+          <span class="row-amount neut" id="rnEmployerSI">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Total Employer Cost</div><div class="row-sub">Gross + Employer SI</div></div>
+          <span class="row-amount neut" id="rnTotalCost">—</span>
+        </div>
+      </div>
+
+      <div class="bracket-info" id="rnBracketInfo"></div>
+
+      <div class="gross-card">
+        <div class="hero-label blue">Required Gross Salary</div>
+        <div class="hero-amount blue">
+          <span class="hero-cur" style="color:var(--blue)">EGP</span><span id="rnGrossHero">—</span>
+        </div>
+        <div class="hero-sub" style="color:var(--blue)" id="rnVerify">—</div>
+      </div>
+
+      <p class="disclaimer">
+        SI: Law 148/2019 · 2026 rates (min 2,700 / max 16,700 EGP) · Income Tax: Law 7/2024 (Art. 7 bis A)<br>
+        Martyr Fund: 0.05% of gross. Estimate only — verify with HR or accountant.
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       TAB 3 · EMERGENCY FUND
+  ════════════════════════════════════ -->
+  <div id="panelEmergency" style="display:none;">
+    <div class="input-card">
+      <label class="input-label purple">Employee Monthly Salary</label>
+      <div class="input-wrapper pf">
+        <div class="cur purple">EGP</div>
+        <input type="number" id="efInput" placeholder="0" min="0" step="100"/>
+      </div>
+      <p style="margin-top:14px; font-size:11px; color:var(--muted); line-height:1.7;">
+        Calculates the <strong style="color:var(--purple)">1% Emergency Fund</strong> contribution paid by the employer,
+        based on the insured salary (capped at 2,300–14,500 EGP for emergency fund purposes), a 3% insurance portion,
+        and a fixed base of 2,540 EGP — per the official formula.
+      </p>
+      <button class="calc-btn purple-btn" onclick="calculateEmergencyFund()">▶ Calculate Emergency Fund</button>
+    </div>
+
+    <div class="results" id="resultsEF">
+      <div class="section-title">Emergency Fund Calculation Steps</div>
+
+      <div class="breakdown-card">
+        <div class="top-row" style="background:rgba(124,92,191,0.06);">
+          <span class="top-label">Input Salary</span>
+          <span class="top-value" id="efSalaryDisplay" style="color:var(--purple)">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Capped Insured Salary</div><div class="row-sub" id="efCapNote">Applied min/max cap</div></div>
+          <span class="row-amount neut" id="efCapped">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Insurance Portion</div><div class="row-sub">3% of capped insured salary</div></div>
+          <span class="row-amount neut" id="efInsurancePortion">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Base Amount</div><div class="row-sub">2,540 + insurance portion</div></div>
+          <span class="row-amount neut" id="efBase">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Rounded Base</div><div class="row-sub">Rounded to nearest 10 EGP (standard)</div></div>
+          <span class="row-amount neut" id="efRounded">—</span>
+        </div>
+      </div>
+
+      <div class="steps-card" id="efStepsDetail"></div>
+
+      <div class="emergency-card">
+        <div class="hero-label purple">Monthly Emergency Fund</div>
+        <div class="hero-amount purple">
+          <span class="hero-cur" style="color:var(--purple)">EGP</span><span id="efResult">—</span>
+        </div>
+        <div class="hero-sub" style="color:var(--purple)">1% of rounded base · Employer contribution</div>
+      </div>
+
+      <div class="section-title">Full Employer Cost Summary</div>
+      <div class="breakdown-card">
+        <div class="breakdown-row">
+          <div><div class="row-label">Gross Salary</div><div class="row-sub">Employee gross</div></div>
+          <span class="row-amount neut" id="efGrossSummary">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Employer Social Insurance</div><div class="row-sub">18.75% of insured wage</div></div>
+          <span class="row-amount neut" id="efEmprSI">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Emergency Fund (1%)</div><div class="row-sub">Employer obligation</div></div>
+          <span class="row-amount purp" id="efEmergencySummary">—</span>
+        </div>
+        <div class="breakdown-row" style="background:rgba(167,139,250,0.05);">
+          <div><div class="row-label" style="color:var(--text); font-weight:500;">Total Employer Cost</div><div class="row-sub">Gross + Employer SI + Emergency Fund</div></div>
+          <span class="row-amount purp" id="efTotalCost">—</span>
+        </div>
+      </div>
+
+      <p class="disclaimer">
+        Emergency Fund: Law 148/2019 · Employer obligation only · Employee pays nothing.<br>
+        SI caps: min 2,700 / max 16,700 EGP · Emergency Fund cap: 2,300–14,500 EGP. Estimate only — verify with accountant.
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       TAB 4 · BULK IMPORT / EXPORT
+  ════════════════════════════════════ -->
+  <div id="panelBulk" style="display:none;">
+
+    <!-- Step 1: Download template -->
+    <div class="input-card" style="border-left:4px solid #e67e22; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <span style="background:#e67e22; color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; padding:3px 10px; border-radius:4px;">STEP 1</span>
+        <span style="font-weight:600; font-size:13px; color:#111;">Download Template</span>
+      </div>
+      <p style="font-size:12px; color:#555550; line-height:1.7; margin-bottom:16px;">
+        Download the Excel template, fill in employee names and salary amounts in the correct columns, then upload it back.
+      </p>
+      <div class="toggle-row" style="margin-top:0;">
+        <button class="toggle-btn" id="tplGross" onclick="setTplMode('gross')" style="border-color:#2e7d52; color:#2e7d52; font-weight:700;">Gross → Net</button>
+        <button class="toggle-btn" id="tplNet"   onclick="setTplMode('net')"   style="">Net → Gross</button>
+      </div>
+      <button class="calc-btn" style="background:#e67e22; margin-top:16px;" onclick="downloadTemplate()">⬇ Download Excel Template</button>
+    </div>
+
+    <!-- Step 2: Upload & Process -->
+    <div class="input-card" style="border-left:4px solid #2d6bc4; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <span style="background:#2d6bc4; color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; padding:3px 10px; border-radius:4px;">STEP 2</span>
+        <span style="font-weight:600; font-size:13px; color:#111;">Upload & Calculate</span>
+      </div>
+      <p style="font-size:12px; color:#555550; line-height:1.7; margin-bottom:16px;">
+        Upload your filled Excel file. All rows will be processed instantly using the same Egyptian law calculations.
+      </p>
+      <div id="dropZone" onclick="document.getElementById('fileInput').click()"
+        style="border:2px dashed #c0c0b8; border-radius:10px; padding:32px; text-align:center; cursor:pointer; transition:all 0.2s; background:#f0f0eb;">
+        <div style="font-size:28px; margin-bottom:8px;">📂</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#888882;">Click to upload or drag &amp; drop</div>
+        <div style="font-size:11px; color:#aaa; margin-top:4px;">.xlsx or .xls files only</div>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)"/>
+      <div id="uploadStatus" style="display:none; margin-top:12px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:#2e7d52; padding:10px; background:rgba(46,125,82,0.08); border-radius:6px;"></div>
+    </div>
+
+    <!-- Results table -->
+    <div id="bulkResults" style="display:none;">
+      <div class="section-title">Calculated Results</div>
+
+      <div class="breakdown-card" style="overflow-x:auto;">
+        <div id="bulkTableWrap" style="min-width:600px;">
+          <table id="bulkTable" style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:#d8d8d0;">
+                <th style="padding:10px 14px; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#555; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">#</th>
+                <th style="padding:10px 14px; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#555; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">Employee</th>
+                <th id="thInput" style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#555; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">Gross</th>
+                <th style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#c0392b; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">Emp SI</th>
+                <th style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#c0392b; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">Tax</th>
+                <th style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#c0392b; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">Martyr</th>
+                <th id="thOutput" style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#2e7d52; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">Net</th>
+                <th style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:#555; text-transform:uppercase; border-bottom:1px solid #c8c8c0;">Tax Model</th>
+              </tr>
+            </thead>
+            <tbody id="bulkTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totals summary -->
+      <div class="breakdown-card" style="margin-top:4px;">
+        <div class="top-row" style="background:rgba(46,125,82,0.06);">
+          <span class="top-label">Totals Summary</span>
+          <span class="top-value" id="bulkRowCount" style="color:#888882; font-size:13px;"></span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label" id="totGrossLabel">Total Gross</div></div>
+          <span class="row-amount neut" id="totGross">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Total Employee SI</div></div>
+          <span class="row-amount ded" id="totSI">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Total Income Tax</div></div>
+          <span class="row-amount ded" id="totTax">—</span>
+        </div>
+        <div class="breakdown-row">
+          <div><div class="row-label">Total Martyr Fund</div></div>
+          <span class="row-amount ded" id="totMartyr">—</span>
+        </div>
+        <div class="breakdown-row" style="background:rgba(46,125,82,0.05);">
+          <div><div class="row-label" id="totNetLabel" style="color:#2e7d52; font-weight:600;">Total Net</div></div>
+          <span class="row-amount pos" id="totNet">—</span>
+        </div>
+      </div>
+
+      <button class="calc-btn" style="background:#2e7d52;" onclick="exportResults()">⬆ Export Results to Excel</button>
+
+      <p class="disclaimer">
+        Exported file includes full breakdown per employee · Prepared by Mohamed Abdo<br>
+        Egyptian Law: SI Law 148/2019 · Income Tax Law 7/2024 · 2026 rates
+      </p>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════
+const SI_MIN       = 2700;
+const SI_MAX       = 16700;
+const EMP_SI_RATE  = 0.11;
+const EMPR_SI_RATE = 0.1875;
+const MARTYR_RATE  = 0.0005;   // 0.05% of gross
+const PERSONAL_EXP = 20000;    // annual
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const fmt = n => n.toLocaleString('en-EG',{minimumFractionDigits:2,maximumFractionDigits:2});
+const roundDown10 = n => Math.floor(n/10)*10;
+const roundNearest10 = n => Math.round(n/10)*10;
+const capWage = g => Math.max(SI_MIN, Math.min(g, SI_MAX));
+
+// ═══════════════════════════════════════════════════════
+// TAX ENGINE — Law 7/2024 Conditional Brackets
+// ═══════════════════════════════════════════════════════
+function calcAnnualTax(annualNetIncome) {
+  const taxable = roundDown10(annualNetIncome);
+  if (taxable <= 0) return {tax:0, model:'Exempt', taxable:0, detail:[]};
+
+  let model, brackets;
+  if      (taxable <= 600000)  { model='A'; brackets=[[0,40000,0],[40000,55000,.10],[55000,70000,.15],[70000,200000,.20],[200000,400000,.225],[400000,Infinity,.25]]; }
+  else if (taxable <= 700000)  { model='B'; brackets=[[0,55000,.10],[55000,70000,.15],[70000,200000,.20],[200000,400000,.225],[400000,Infinity,.25]]; }
+  else if (taxable <= 800000)  { model='C'; brackets=[[0,70000,.15],[70000,200000,.20],[200000,400000,.225],[400000,Infinity,.25]]; }
+  else if (taxable <= 900000)  { model='D'; brackets=[[0,200000,.20],[200000,400000,.225],[400000,Infinity,.25]]; }
+  else if (taxable <= 1200000) { model='E'; brackets=[[0,400000,.225],[400000,Infinity,.25]]; }
+  else                         { model='F'; brackets=[[0,1200000,.25],[1200000,Infinity,.275]]; }
+
+  let tax=0, detail=[], remaining=taxable, prev=0;
+  for(const [from,to,rate] of brackets){
+    const slice = Math.min(remaining, to===Infinity ? remaining : to-from);
+    if(slice<=0) break;
+    const t = slice*rate;
+    tax+=t;
+    if(rate>0) detail.push({from,to:from+slice,rate,tax:t});
+    remaining-=slice; prev=to;
+    if(remaining<=0) break;
+  }
+  return {tax, model, taxable, detail};
+}
+
+// ═══════════════════════════════════════════════════════
+// FULL MONTHLY DEDUCTIONS
+// ═══════════════════════════════════════════════════════
+function deductionsFromGross(g) {
+  const iw      = capWage(g);
+  const empSI   = iw * EMP_SI_RATE;
+  const emprSI  = iw * EMPR_SI_RATE;
+  const martyr  = g  * MARTYR_RATE;
+  const ani     = (g - empSI)*12 - PERSONAL_EXP;
+  const {tax:annualTax, model, taxable, detail} = calcAnnualTax(ani);
+  const monthlyTax = annualTax/12;
+  const net = g - empSI - monthlyTax - martyr;
+  return {empSI,emprSI,martyr,monthlyTax,annualTax,ani,taxable,model,detail,net,iw};
+}
+
+// ═══════════════════════════════════════════════════════
+// BRACKET HTML
+// ═══════════════════════════════════════════════════════
+function bracketHTML(ani, taxable, monthlyTax, annualTax, model, detail) {
+  let h=`<div class="bracket-badge">Model ${model} · Law 7/2024</div><br>`;
+  h+=`Annual net income (pre-rounding): <strong>EGP ${fmt(ani)}</strong><br>`;
+  h+=`Taxable income (rounded ↓ nearest 10): <strong>EGP ${fmt(taxable)}</strong><br>`;
+  if(!detail.length) { h+=`→ <strong>Within tax-free band. No income tax.</strong>`; }
+  else {
+    detail.forEach(d=>{ h+=`→ EGP ${fmt(d.from)}–${fmt(d.to)} @ <strong>${(d.rate*100).toFixed(1)}%</strong> = EGP ${fmt(d.tax)}/yr<br>`; });
+    h+=`→ Annual tax: <strong>EGP ${fmt(annualTax)}</strong> · Monthly: <strong>EGP ${fmt(monthlyTax)}</strong>`;
+  }
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════
+// EMERGENCY FUND ENGINE
+// ═══════════════════════════════════════════════════════
+const EF_MIN = 2300; // Emergency fund specific minimum (different from SI min of 2700)
+const EF_CAP = 14500; // Emergency fund specific cap (different from SI max of 16700)
+
+function calcEmergencyFund(salary) {
+  const capped = Math.max(EF_MIN, Math.min(salary, EF_CAP));
+  const insurancePortion = capped * 0.03;
+  const base = 2540 + insurancePortion;
+  const rounded = roundNearest10(base);
+  const fund = rounded * 0.01;
+  return {capped, insurancePortion, base, rounded, fund};
+}
+
+// ═══════════════════════════════════════════════════════
+// UI STATE
+// ═══════════════════════════════════════════════════════
+let empMode = 'employee';
+const MODES = {
+  gross:     {panel:'panelGross',    btn:'modeGross',     cls:'gold-active'},
+  net:       {panel:'panelNet',      btn:'modeNet',       cls:'blue-active'},
+  emergency: {panel:'panelEmergency',btn:'modeEmergency', cls:'purple-active'},
+  bulk:      {panel:'panelBulk',     btn:'modeBulk',      cls:'orange-active'},
+};
+
+function switchMode(m) {
+  Object.entries(MODES).forEach(([key,v])=>{
+    document.getElementById(v.panel).style.display = key===m ? 'block':'none';
+    const btn = document.getElementById(v.btn);
+    btn.classList.remove('gold-active','blue-active','purple-active');
+    if(key===m) btn.classList.add(v.cls);
+  });
+}
+
+function setEmpMode(m) {
+  empMode=m;
+  document.getElementById('btnEmployee').classList.toggle('active', m==='employee');
+  document.getElementById('btnEmployer').classList.toggle('active', m==='employer');
+  document.getElementById('employerSection').style.display = m==='employer' ? 'block':'none';
+  if(document.getElementById('resultsGross').classList.contains('visible')) calculateGrossToNet();
+}
+
+// ═══════════════════════════════════════════════════════
+// CALC 1 · GROSS → NET
+// ═══════════════════════════════════════════════════════
+function calculateGrossToNet() {
+  const gross = parseFloat(document.getElementById('grossInput').value);
+  if(!gross||gross<=0){alert('Please enter a valid gross salary.');return;}
+  const {empSI,emprSI,martyr,monthlyTax,annualTax,ani,taxable,model,detail,net,iw} = deductionsFromGross(gross);
+
+  document.getElementById('rGross').textContent      = 'EGP '+fmt(gross);
+  document.getElementById('rSI').textContent         = '− EGP '+fmt(empSI);
+  document.getElementById('rTax').textContent        = '− EGP '+fmt(monthlyTax);
+  document.getElementById('rMartyr').textContent     = '− EGP '+fmt(martyr);
+  document.getElementById('rNet').textContent        = fmt(net);
+  document.getElementById('rNetPct').textContent     = (net/gross*100).toFixed(1)+'% of gross salary';
+  document.getElementById('rEmployerSI').textContent = 'EGP '+fmt(emprSI);
+  document.getElementById('rTotalCost').textContent  = 'EGP '+fmt(gross+emprSI);
+
+  let siNote=`11% of EGP ${fmt(iw)}`;
+  if(gross<SI_MIN) siNote+=` (minimum floor applied)`;
+  else if(gross>SI_MAX) siNote+=` (maximum ceiling applied)`;
+  document.getElementById('rSINote').textContent   = siNote;
+  document.getElementById('rTaxNote').textContent  = `Model ${model} · Taxable: EGP ${fmt(taxable)}`;
+  document.getElementById('rBracketInfo').innerHTML = bracketHTML(ani,taxable,monthlyTax,annualTax,model,detail);
+
+  document.getElementById('barNet').style.flex    = Math.max(net,0)/gross;
+  document.getElementById('barSI').style.flex     = empSI/gross;
+  document.getElementById('barTax').style.flex    = monthlyTax/gross;
+  document.getElementById('barMartyr').style.flex = martyr/gross;
+
+  const r=document.getElementById('resultsGross');
+  r.classList.add('visible');
+  r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ═══════════════════════════════════════════════════════
+// CALC 2 · NET → GROSS (binary search)
+// ═══════════════════════════════════════════════════════
+function calculateNetToGross() {
+  const targetNet = parseFloat(document.getElementById('netInput').value);
+  if(!targetNet||targetNet<=0){alert('Please enter a valid net salary.');return;}
+
+  let lo=targetNet, hi=targetNet*4;
+  while(deductionsFromGross(hi).net < targetNet) hi*=2;
+  for(let i=0;i<200;i++){
+    const mid=(lo+hi)/2;
+    if(deductionsFromGross(mid).net<targetNet) lo=mid; else hi=mid;
+    if(hi-lo<0.001) break;
+  }
+  const gross=(lo+hi)/2;
+  const {empSI,emprSI,martyr,monthlyTax,annualTax,ani,taxable,model,detail,net,iw} = deductionsFromGross(gross);
+
+  document.getElementById('rnGross').textContent      = 'EGP '+fmt(gross);
+  document.getElementById('rnGrossHero').textContent  = fmt(gross);
+  document.getElementById('rnSI').textContent         = '− EGP '+fmt(empSI);
+  document.getElementById('rnTax').textContent        = '− EGP '+fmt(monthlyTax);
+  document.getElementById('rnMartyr').textContent     = '− EGP '+fmt(martyr);
+  document.getElementById('rnEmployerSI').textContent = 'EGP '+fmt(emprSI);
+  document.getElementById('rnTotalCost').textContent  = 'EGP '+fmt(gross+emprSI);
+  document.getElementById('rnVerify').textContent     = `Verified net: EGP ${fmt(net)}`;
+
+  let siNote=`11% of EGP ${fmt(iw)}`;
+  if(gross<SI_MIN) siNote+=` (min floor applied)`;
+  else if(gross>SI_MAX) siNote+=` (max ceiling applied)`;
+  document.getElementById('rnSINote').textContent    = siNote;
+  document.getElementById('rnTaxNote').textContent   = `Model ${model} · Taxable: EGP ${fmt(taxable)}`;
+  document.getElementById('rnBracketInfo').innerHTML = bracketHTML(ani,taxable,monthlyTax,annualTax,model,detail);
+
+  const r=document.getElementById('resultsNet');
+  r.classList.add('visible');
+  r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ═══════════════════════════════════════════════════════
+// CALC 3 · EMERGENCY FUND
+// ═══════════════════════════════════════════════════════
+function calculateEmergencyFund() {
+  const salary = parseFloat(document.getElementById('efInput').value);
+  if(!salary||salary<=0){alert('Please enter a valid salary.');return;}
+
+  const {capped,insurancePortion,base,rounded,fund} = calcEmergencyFund(salary);
+  const iw = capWage(salary);
+  const emprSI = iw * EMPR_SI_RATE;
+  const totalCost = salary + emprSI + fund;
+
+  document.getElementById('efSalaryDisplay').textContent    = 'EGP '+fmt(salary);
+  document.getElementById('efCapped').textContent           = 'EGP '+fmt(capped);
+  document.getElementById('efInsurancePortion').textContent = 'EGP '+fmt(insurancePortion);
+  document.getElementById('efBase').textContent             = 'EGP '+fmt(base);
+  document.getElementById('efRounded').textContent          = 'EGP '+fmt(rounded);
+  document.getElementById('efResult').textContent           = fmt(fund);
+  document.getElementById('efGrossSummary').textContent     = 'EGP '+fmt(salary);
+  document.getElementById('efEmprSI').textContent           = 'EGP '+fmt(emprSI);
+  document.getElementById('efEmergencySummary').textContent = 'EGP '+fmt(fund);
+  document.getElementById('efTotalCost').textContent        = 'EGP '+fmt(totalCost);
+
+  let capNote = `Salary ${salary<EF_MIN?'below min → set to 2,300':salary>EF_CAP?'above 14,500 → capped at 14,500':'within range (2,300–14,500)'}`;
+  document.getElementById('efCapNote').textContent = capNote;
+
+  document.getElementById('efStepsDetail').innerHTML = `
+    <span class="step-num">1</span> Cap insured salary (EF range: 2,300–14,500): <strong>EGP ${fmt(capped)}</strong>
+      ${salary<EF_MIN?'(below 2,300 → floor applied)':salary>EF_CAP?'(above 14,500 → ceiling applied)':'(within 2,300–14,500 range)'}<br>
+    <span class="step-num">2</span> Insurance portion: ${fmt(capped)} × 3% = <strong>EGP ${fmt(insurancePortion)}</strong><br>
+    <span class="step-num">3</span> Base amount: 2,540 + ${fmt(insurancePortion)} = <strong>EGP ${fmt(base)}</strong><br>
+    <span class="step-num">4</span> Round to nearest 10: <strong>EGP ${fmt(rounded)}</strong>
+      (last digit ${Math.round(base)%10 >= 5 ? '≥5 → rounded up':'<5 → rounded down'})<br>
+    <span class="step-num">5</span> Emergency fund = ${fmt(rounded)} × 1% = <strong>EGP ${fmt(fund)}</strong>
+  `;
+
+  const r=document.getElementById('resultsEF');
+  r.classList.add('visible');
+  r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ═══════════════════════════════════════════════════════
+// BULK MODE STATE
+// ═══════════════════════════════════════════════════════
+let bulkMode = 'gross'; // 'gross' or 'net'
+let bulkRows = [];
+
+function setTplMode(m) {
+  bulkMode = m;
+  document.getElementById('tplGross').style.cssText = m==='gross'
+    ? 'border-color:#2e7d52;color:#2e7d52;font-weight:700;background:rgba(46,125,82,0.1);'
+    : '';
+  document.getElementById('tplNet').style.cssText = m==='net'
+    ? 'border-color:#2d6bc4;color:#2d6bc4;font-weight:700;background:rgba(45,107,196,0.1);'
+    : '';
+}
+
+// ═══════════════════════════════════════════════════════
+// DOWNLOAD TEMPLATE
+// ═══════════════════════════════════════════════════════
+function downloadTemplate() {
+  const isGross = bulkMode === 'gross';
+  const wb = XLSX.utils.book_new();
+
+  // Header styling via cell metadata
+  const title    = `Egyptian Salary Calculator — ${isGross ? 'Gross to Net' : 'Net to Gross'} Template`;
+  const colLabel = isGross ? 'Gross Salary (EGP)' : 'Net Salary (EGP)';
+
+  const wsData = [
+    [title],
+    ['Prepared by Mohamed Abdo'],
+    [''],
+    ['#', 'Employee Name', colLabel],
+    [1, 'Employee 1', ''],
+    [2, 'Employee 2', ''],
+    [3, 'Employee 3', ''],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column widths
+  ws['!cols'] = [{wch:5},{wch:28},{wch:22}];
+
+  // Merge title row
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Salary Data');
+  XLSX.writeFile(wb, `salary_template_${bulkMode}.xlsx`);
+}
+
+// ═══════════════════════════════════════════════════════
+// HANDLE FILE UPLOAD
+// ═══════════════════════════════════════════════════════
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb   = XLSX.read(data, {type:'array'});
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+      // Detect mode from file content (look for "Net" or "Gross" in first two rows)
+      const topText = (rows[0]?.[0]||'').toString().toLowerCase() + (rows[1]?.[0]||'').toString().toLowerCase();
+      if (topText.includes('net to gross')) bulkMode = 'net';
+      else if (topText.includes('gross to net')) bulkMode = 'gross';
+
+      // Find data rows: skip until we find a row where col[0] is a number or col[1] has text
+      const dataRows = [];
+      for (const row of rows) {
+        const num = parseFloat(row[0]);
+        const name = (row[1]||'').toString().trim();
+        const salary = parseFloat(row[2]);
+        if (!isNaN(salary) && salary > 0 && name) {
+          dataRows.push({name, salary});
+        }
+      }
+
+      if (dataRows.length === 0) {
+        document.getElementById('uploadStatus').style.display = 'block';
+        document.getElementById('uploadStatus').style.color = '#c0392b';
+        document.getElementById('uploadStatus').style.background = 'rgba(192,57,43,0.08)';
+        document.getElementById('uploadStatus').textContent = '⚠ No valid data found. Make sure Employee Name (col B) and Salary (col C) are filled.';
+        return;
+      }
+
+      processBulk(dataRows);
+      document.getElementById('uploadStatus').style.display = 'block';
+      document.getElementById('uploadStatus').style.color = '#2e7d52';
+      document.getElementById('uploadStatus').style.background = 'rgba(46,125,82,0.08)';
+      document.getElementById('uploadStatus').textContent = `✓ ${dataRows.length} employee(s) loaded and calculated successfully.`;
+    } catch(err) {
+      document.getElementById('uploadStatus').style.display = 'block';
+      document.getElementById('uploadStatus').textContent = '⚠ Error reading file: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// PROCESS BULK ROWS
+// ═══════════════════════════════════════════════════════
+function grossUpSearch(targetNet) {
+  let lo=targetNet, hi=targetNet*4;
+  while(deductionsFromGross(hi).net < targetNet) hi*=2;
+  for(let i=0;i<200;i++){
+    const mid=(lo+hi)/2;
+    if(deductionsFromGross(mid).net<targetNet) lo=mid; else hi=mid;
+    if(hi-lo<0.001) break;
+  }
+  return (lo+hi)/2;
+}
+
+function processBulk(dataRows) {
+  bulkRows = [];
+  const isNet = bulkMode === 'net';
+
+  // Update table headers
+  document.getElementById('thInput').textContent  = isNet ? 'Net Input' : 'Gross';
+  document.getElementById('thOutput').textContent = isNet ? 'Gross'     : 'Net';
+  document.getElementById('totGrossLabel').textContent = isNet ? 'Total Net Input' : 'Total Gross';
+  document.getElementById('totNetLabel').textContent   = isNet ? 'Total Required Gross' : 'Total Net';
+
+  let totGross=0, totSI=0, totTax=0, totMartyr=0, totNet=0;
+  const tbody = document.getElementById('bulkTableBody');
+  tbody.innerHTML = '';
+
+  dataRows.forEach((row, i) => {
+    let gross, res;
+    if (isNet) {
+      gross = grossUpSearch(row.salary);
+      res   = deductionsFromGross(gross);
+    } else {
+      gross = row.salary;
+      res   = deductionsFromGross(gross);
+    }
+
+    const inputVal  = isNet ? row.salary : gross;
+    const outputVal = isNet ? gross      : res.net;
+
+    bulkRows.push({
+      num: i+1, name: row.name, inputSalary: row.salary,
+      gross, empSI: res.empSI, monthlyTax: res.monthlyTax,
+      martyr: res.martyr, net: res.net, model: res.model,
+      emprSI: res.emprSI
+    });
+
+    totGross  += isNet ? row.salary : gross;
+    totSI     += res.empSI;
+    totTax    += res.monthlyTax;
+    totMartyr += res.martyr;
+    totNet    += isNet ? gross : res.net;
+
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #e0e0d8';
+    if (i%2===0) tr.style.background = 'rgba(0,0,0,0.015)';
+    tr.innerHTML = `
+      <td style="padding:10px 14px; font-family:'IBM Plex Mono',monospace; color:#888;">${i+1}</td>
+      <td style="padding:10px 14px; font-weight:500;">${row.name}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace;">${fmt(inputVal)}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; color:#c0392b;">${fmt(res.empSI)}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; color:#c0392b;">${fmt(res.monthlyTax)}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; color:#c0392b;">${fmt(res.martyr)}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; color:#2e7d52; font-weight:600;">${fmt(outputVal)}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:11px; color:#7c5cbf;">${res.model}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('totGross').textContent  = 'EGP ' + fmt(totGross);
+  document.getElementById('totSI').textContent     = '− EGP ' + fmt(totSI);
+  document.getElementById('totTax').textContent    = '− EGP ' + fmt(totTax);
+  document.getElementById('totMartyr').textContent = '− EGP ' + fmt(totMartyr);
+  document.getElementById('totNet').textContent    = 'EGP ' + fmt(totNet);
+  document.getElementById('bulkRowCount').textContent = `${dataRows.length} employees`;
+
+  document.getElementById('bulkResults').style.display = 'block';
+  document.getElementById('bulkResults').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT RESULTS TO EXCEL
+// ═══════════════════════════════════════════════════════
+
+// No cell protection applied
+
+function exportResults() {
+  if (!bulkRows.length) return;
+  const isNet    = bulkMode === 'net';
+  const wb       = XLSX.utils.book_new();
+  const now      = new Date().toLocaleDateString('en-GB');
+  const modeLabel = isNet ? 'Net to Gross' : 'Gross to Net';
+
+  const TITLE_TEXT  = `Egyptian Salary Calculator — ${modeLabel}`;
+  const AUTHOR_TEXT = `By Mohamed Abdo`;
+  const META_TEXT   = `Generated: ${now} | Law: SI Law 148/2019 · Income Tax Law 7/2024 · 2026 Rates`;
+
+  // ────────────────────────────────────────────
+  // SHEET 1 · Full Breakdown
+  // ────────────────────────────────────────────
+  const cols = ['#','Employee Name',
+    isNet ? 'Net Input (EGP)' : 'Gross Salary (EGP)',
+    'Emp SI (EGP)','Income Tax (EGP)','Martyr Fund (EGP)',
+    isNet ? 'Required Gross (EGP)' : 'Net Salary (EGP)',
+    'Employer SI (EGP)', 'Tax Model'];
+
+  const dataRows1 = bulkRows.map(r => [
+    r.num, r.name,
+    isNet ? r.inputSalary : r.gross,
+    r.empSI, r.monthlyTax, r.martyr,
+    isNet ? r.gross : r.net,
+    r.emprSI, r.model
+  ]);
+
+  const totSI     = bulkRows.reduce((s,r)=>s+r.empSI,0);
+  const totTax    = bulkRows.reduce((s,r)=>s+r.monthlyTax,0);
+  const totMartyr = bulkRows.reduce((s,r)=>s+r.martyr,0);
+  const totEmprSI = bulkRows.reduce((s,r)=>s+r.emprSI,0);
+  const totIn     = isNet ? bulkRows.reduce((s,r)=>s+r.inputSalary,0) : bulkRows.reduce((s,r)=>s+r.gross,0);
+  const totOut    = isNet ? bulkRows.reduce((s,r)=>s+r.gross,0)       : bulkRows.reduce((s,r)=>s+r.net,0);
+  const totRow    = ['','TOTAL', totIn, totSI, totTax, totMartyr, totOut, totEmprSI, ''];
+
+  const ws1Data = [[TITLE_TEXT],[AUTHOR_TEXT],[META_TEXT],[''], cols, ...dataRows1, [''], totRow];
+  const ws1 = XLSX.utils.aoa_to_sheet(ws1Data);
+  ws1['!cols']   = [{wch:4},{wch:28},{wch:20},{wch:16},{wch:16},{wch:14},{wch:20},{wch:16},{wch:10}];
+  ws1['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:8}},
+    {s:{r:1,c:0},e:{r:1,c:8}},
+    {s:{r:2,c:0},e:{r:2,c:8}},
+  ];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Full Breakdown');
+
+  // ────────────────────────────────────────────
+  // SHEET 2 · Summary
+  // ────────────────────────────────────────────
+  const summaryData = [
+    [`Egyptian Salary Summary — ${modeLabel}`],
+    [AUTHOR_TEXT + ' | ' + now],
+    [''],
+    ['Metric', 'Amount (EGP)'],
+    ['Number of Employees', bulkRows.length],
+    [isNet ? 'Total Net Input' : 'Total Gross Payroll', totIn],
+    ['Total Employee Social Insurance', totSI],
+    ['Total Income Tax', totTax],
+    ['Total Martyr Fund', totMartyr],
+    [isNet ? 'Total Required Gross' : 'Total Net Take-Home', totOut],
+    [''],
+    ['Employer Obligations', ''],
+    ['Total Employer SI (18.75%)', totEmprSI],
+    ['Total Employer Cost', totIn + totEmprSI],
+    [''],
+    ['Legal References', ''],
+    ['Social Insurance Law', 'Law 148/2019 (2026 rates: min 2,700 / max 16,700 EGP)'],
+    ['Income Tax Law', 'Law 7/2024 (Art. 7 bis A) — Conditional Progressive Brackets'],
+    ['Martyr Fund', '0.05% of gross salary'],
+    ['Personal Exemption', '20,000 EGP / year'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+  ws2['!cols']   = [{wch:36},{wch:40}];
+  ws2['!merges'] = [{s:{r:0,c:0},e:{r:0,c:1}},{s:{r:1,c:0},e:{r:1,c:1}}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+
+  // ────────────────────────────────────────────
+  // SHEET 3 · Tax Model Guide
+  // ────────────────────────────────────────────
+  const taxGuideData = [
+    ['Income Tax Guide — Law No. 7 of 2024 (Art. 7 bis A)'],
+    ['By Mohamed Abdo'],
+    ['Conditional Progressive Brackets — Annual Net Taxable Income'],
+    [''],
+    ['⚠ IMPORTANT: This law does NOT use traditional cumulative brackets.'],
+    ['The model is selected FIRST based on total annual net income, then only that model\'s brackets apply.'],
+    ['Annual Net Taxable Income = (Gross − Employee SI) × 12 − 20,000 EGP personal exemption'],
+    ['Round DOWN to nearest 10 EGP before applying brackets.'],
+    [''],
+    // Model A
+    ['MODEL A — Net Income: 0 to 600,000 EGP', '', '', ''],
+    ['Bracket (Annual)', 'Rate', 'Max Tax in Bracket', 'Notes'],
+    ['0 – 40,000',       '0%',   '0',                  'Tax-free band'],
+    ['40,001 – 55,000',  '10%',  '1,500',              ''],
+    ['55,001 – 70,000',  '15%',  '2,250',              ''],
+    ['70,001 – 200,000', '20%',  '26,000',             ''],
+    ['200,001 – 400,000','22.5%','45,000',             ''],
+    ['Above 400,000',    '25%',  'Unlimited',          'Top bracket for Model A'],
+    [''],
+    // Model B
+    ['MODEL B — Net Income: 600,001 to 700,000 EGP', '', '', ''],
+    ['Bracket (Annual)', 'Rate', 'Max Tax in Bracket', 'Notes'],
+    ['0 – 55,000',       '10%',  '5,500',              '0% band removed'],
+    ['55,001 – 70,000',  '15%',  '2,250',              ''],
+    ['70,001 – 200,000', '20%',  '26,000',             ''],
+    ['200,001 – 400,000','22.5%','45,000',             ''],
+    ['Above 400,000',    '25%',  'Unlimited',          ''],
+    [''],
+    // Model C
+    ['MODEL C — Net Income: 700,001 to 800,000 EGP', '', '', ''],
+    ['Bracket (Annual)', 'Rate', 'Max Tax in Bracket', 'Notes'],
+    ['0 – 70,000',       '15%',  '10,500',             '0% and 10% bands removed'],
+    ['70,001 – 200,000', '20%',  '26,000',             ''],
+    ['200,001 – 400,000','22.5%','45,000',             ''],
+    ['Above 400,000',    '25%',  'Unlimited',          ''],
+    [''],
+    // Model D
+    ['MODEL D — Net Income: 800,001 to 900,000 EGP', '', '', ''],
+    ['Bracket (Annual)', 'Rate', 'Max Tax in Bracket', 'Notes'],
+    ['0 – 200,000',      '20%',  '40,000',             '0%, 10%, 15% bands removed'],
+    ['200,001 – 400,000','22.5%','45,000',             ''],
+    ['Above 400,000',    '25%',  'Unlimited',          ''],
+    [''],
+    // Model E
+    ['MODEL E — Net Income: 900,001 to 1,200,000 EGP', '', '', ''],
+    ['Bracket (Annual)', 'Rate', 'Max Tax in Bracket', 'Notes'],
+    ['0 – 400,000',      '22.5%','90,000',             '0%, 10%, 15%, 20% bands removed'],
+    ['Above 400,000',    '25%',  'Unlimited',          ''],
+    [''],
+    // Model F
+    ['MODEL F — Net Income: Above 1,200,000 EGP', '', '', ''],
+    ['Bracket (Annual)', 'Rate', 'Max Tax in Bracket', 'Notes'],
+    ['0 – 1,200,000',    '25%',  '300,000',            'All lower bands removed'],
+    ['Above 1,200,000',  '27.5%','Unlimited',          'Highest bracket — only in Model F'],
+    [''],
+    [''],
+    ['Key Rules', ''],
+    ['Personal Exemption', '20,000 EGP deducted annually before tax calculation'],
+    ['Rounding', 'Round DOWN to nearest 10 EGP on net taxable income'],
+    ['SI Deduction', 'Employee SI (11%) is deducted before calculating taxable income'],
+    ['Monthly Tax', 'Annual tax ÷ 12 = monthly income tax deduction'],
+    ['Forbidden', 'Never apply brackets below the selected model\'s minimum'],
+    ['Forbidden', 'Never apply a single flat rate to all income'],
+    [''],
+    ['Social Insurance Reference', ''],
+    ['Employee Share', '11% of insurable wage'],
+    ['Employer Share', '18.75% of insurable wage'],
+    ['Minimum Insurable Wage (2026)', '2,700 EGP/month'],
+    ['Maximum Insurable Wage (2026)', '16,700 EGP/month'],
+    [''],
+    ['Other Deductions', ''],
+    ['Martyr & Injured Fund', '0.05% of gross salary (monthly)'],
+    ['Emergency Fund (Employer)', '1% of rounded base | base = 2,540 + (capped wage × 3%) | cap: 2,300–14,500 EGP'],
+  ];
+
+  const ws3 = XLSX.utils.aoa_to_sheet(taxGuideData);
+  ws3['!cols'] = [{wch:42},{wch:10},{wch:22},{wch:36}];
+  ws3['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:3}},
+    {s:{r:1,c:0},e:{r:1,c:3}},
+    {s:{r:2,c:0},e:{r:2,c:3}},
+    {s:{r:3,c:0},e:{r:3,c:3}},
+    {s:{r:4,c:0},e:{r:4,c:3}},
+    {s:{r:5,c:0},e:{r:5,c:3}},
+    {s:{r:6,c:0},e:{r:6,c:3}},
+    {s:{r:7,c:0},e:{r:7,c:3}},
+  ];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Tax Model Guide');
+
+  XLSX.writeFile(wb, `salary_results_${modeLabel.replace(/ /g,'_')}_${now.replace(/\//g,'-')}.xlsx`);
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAG & DROP SUPPORT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('grossInput').addEventListener('keydown',e=>{if(e.key==='Enter')calculateGrossToNet();});
+  document.getElementById('netInput').addEventListener('keydown',  e=>{if(e.key==='Enter')calculateNetToGross();});
+  document.getElementById('efInput').addEventListener('keydown',   e=>{if(e.key==='Enter')calculateEmergencyFund();});
+
+  const dz = document.getElementById('dropZone');
+  if (dz) {
+    dz.addEventListener('dragover', e=>{e.preventDefault(); dz.style.borderColor='#2d6bc4'; dz.style.background='rgba(45,107,196,0.05)';});
+    dz.addEventListener('dragleave', ()=>{dz.style.borderColor='#c0c0b8'; dz.style.background='#f0f0eb';});
+    dz.addEventListener('drop', e=>{
+      e.preventDefault();
+      dz.style.borderColor='#c0c0b8'; dz.style.background='#f0f0eb';
+      const file = e.dataTransfer.files[0];
+      if (file) { document.getElementById('fileInput').files = e.dataTransfer.files; handleFileUpload({target:{files:[file]}}); }
+    });
+  }
+
+  // Init template mode buttons
+  setTplMode('gross');
+});
+</script>
+</body>
+</html>
